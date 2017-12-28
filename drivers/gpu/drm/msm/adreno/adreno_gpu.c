@@ -248,7 +248,7 @@ void adreno_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring)
 	 * to account for the possibility that the last command fit exactly into
 	 * the ringbuffer and rb->next hasn't wrapped to zero yet
 	 */
-	wptr = get_wptr(ring);
+	wptr = get_wptr(gpu->rb) & ((gpu->rb->size / 4) - 1);
 
 	/* ensure writes to ringbuffer have hit system memory: */
 	mb();

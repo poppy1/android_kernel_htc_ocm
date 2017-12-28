@@ -671,7 +671,9 @@ void core_tpg_remove_lun(
 	 * rcu_dereference_raw protected by se_lun->lun_group symlink
 	 * reference to se_device->dev_group.
 	 */
-	struct se_device *dev = rcu_dereference_raw(lun->lun_se_dev);
+	struct se_device *dev = rcu_dereference_raw(lun->lun_se_dev); 
+
+	lun->lun_shutdown = true;
 
 	core_clear_lun_from_tpg(lun, tpg);
 	/*
@@ -694,6 +696,8 @@ void core_tpg_remove_lun(
 	}
 	if (!(dev->se_hba->hba_flags & HBA_FLAGS_INTERNAL_USE))
 		hlist_del_rcu(&lun->link);
+
+	lun->lun_shutdown = false;
 	mutex_unlock(&tpg->tpg_lun_mutex);
 
 	percpu_ref_exit(&lun->lun_ref);

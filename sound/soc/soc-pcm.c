@@ -2262,7 +2262,6 @@ static int dpcm_fe_dai_do_trigger(struct snd_pcm_substream *substream, int cmd)
 		fe->dpcm[stream].state = SND_SOC_DPCM_STATE_START;
 		break;
 	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
 		fe->dpcm[stream].state = SND_SOC_DPCM_STATE_STOP;
 		break;
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
