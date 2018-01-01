@@ -674,9 +674,6 @@ static void *kvm_alloc_hwpgd(void)
  * Allocates only the stage-2 HW PGD level table(s) (can support either full
  * 40-bit input addresses or limited to 32-bit input addresses). Clears the
  * allocated pages.
- *
- * Note we don't need locking here as this is only called when the VM is
- * created, which can only be done once.
  */
 int kvm_alloc_stage2_pgd(struct kvm *kvm)
 {
@@ -837,18 +834,22 @@ void stage2_unmap_vm(struct kvm *kvm)
  */
 void kvm_free_stage2_pgd(struct kvm *kvm)
 {
-	if (kvm->arch.pgd == NULL)
-		return;
+	void *pgd = NULL;
+	void *hwpgd = NULL;
 
 	spin_lock(&kvm->mmu_lock);
-	unmap_stage2_range(kvm, 0, KVM_PHYS_SIZE);
+	if (kvm->arch.pgd) {
+		unmap_stage2_range(kvm, 0, KVM_PHYS_SIZE);
+		pgd = READ_ONCE(kvm->arch.pgd);
+		hwpgd = kvm_get_hwpgd(kvm);
+		kvm->arch.pgd = NULL;
+	}
 	spin_unlock(&kvm->mmu_lock);
 
-	kvm_free_hwpgd(kvm_get_hwpgd(kvm));
-	if (KVM_PREALLOC_LEVEL > 0)
-		kfree(kvm->arch.pgd);
-
-	kvm->arch.pgd = NULL;
+	if (hwpgd)
+		kvm_free_hwpgd(hwpgd);
+	if (KVM_PREALLOC_LEVEL > 0 && pgd)
+		kfree(pgd);
 }
 
 static pud_t *stage2_get_pud(struct kvm *kvm, struct kvm_mmu_memory_cache *cache,
